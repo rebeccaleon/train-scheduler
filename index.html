@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+
+    <title>Train Scheduler</title>
+  </head>
+  <body>
+      <div class="container">
+
+            <div class="jumbotron jumbotron-fluid text-white bg-dark">
+                    <div class="container">
+                      <h1 class="display-4 text-center">Train Scheduler</h1>
+                      <p class="lead text-center">A schedule for trains</p>
+                    </div>
+                  </div>
+            
+                  <h2>Current Train Schedule</h2>
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Train Name</th>
+                        <th scope="col">Destination</th>
+                        <th scope="col">Frequency (min)</th>
+                        <th scope="col">Next Arrival</th>
+                        <th scope="col">Minutes Away</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td id="name"></td>
+                        <td id="destination"></td>
+                        <td id="frequency"></td>
+                        <td id="next-arrival"></td>
+                        <td id="minutes-away"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+            
+                  <h2>Add Train</h2>
+            
+                  <form>
+                    <div class="form-group">
+                      <label for="name-input">Train Name</label>
+                      <input type="text" class="form-control" id="name-input" placeholder="Enter Train Name">
+                    </div>
+                    <div class="form-group">
+                      <label for="role-input">Destination</label>
+                      <input type="text" class="form-control" id="role-input" placeholder="Enter Destination">
+                    </div>
+                    <div class="form-group">
+                      <label for="role-input">First Train Time</label>
+                      <input type="text" class="form-control" id="time-input" placeholder="Enter First Train Time">
+                    </div>
+                    <div class="form-group">
+                        <label for="start-date">Frequency</label>
+                        <input type="text" class="form-control" id="start-date-input" placeholder="Enter Frequency">
+                      </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="add-user">Submit</button>
+                  </form>
+
+      </div>
+    
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+    
+    <!-- LINK TO FIREBASE GOES HERE -->
+  <script src="https://www.gstatic.com/firebasejs/4.12.0/firebase.js"></script>
+  <script src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"></script>
+
+
+  <!-- Script -->
+  <script>
+
+    // Initialize Firebase
+    var config = {
+    apiKey: "AIzaSyDU7BOj8nkbyzbFXp-zK76rY9w7DQzUaZs",
+    authDomain: "train-scheduler-project-1a941.firebaseapp.com",
+    databaseURL: "https://train-scheduler-project-1a941.firebaseio.com",
+    projectId: "train-scheduler-project-1a941",
+    storageBucket: "train-scheduler-project-1a941.appspot.com",
+    messagingSenderId: "424552514727"
+  };
+  
+  firebase.initializeApp(config);
+
+    // Create a variable to reference the database
+
+    var database = firebase.database();
+
+    console.log(database);
+
+
+    // Capture Button Click
+    $("#add-user").on("click", function(event) {
+      // Don't refresh the page!
+      event.preventDefault();
+
+      var name = $("#name-input").val().trim();
+      var role = $("#role-input").val().trim();
+      var startDate = $("#start-date-input").val().trim();
+      firstTrainTime = $("#time-input").val().trim();
+
+        $("#name").text(name);
+        $("#role").text(role);
+        $("#start-date").text(startDate);
+
+      database.ref().push({
+        name: name,
+        role: role,
+        startDate: startDate,
+        firstTrainTime: firstTrainTime,
+      });
+
+      
+
+    });
+
+
+    // Firebase watcher + initial loader HINT: .on("value")
+    //replace "value" with "child_added" in order to look for specifically updates to database (root in this case)
+    database.ref().on("child_added", function(childSnapshot) {
+
+      var currentTrainTime = childSnapshot.val().firstTrainTime;
+      var timeFormat = "HH:mm";
+      var convertedTime = moment(currentTrainTime, timeFormat);
+      var displayedTime = moment(convertedTime).format("hh:mm A");
+
+      var frequencyRate = childSnapshot.val().startDate;
+
+      var firstTimeConverted = moment(currentTrainTime, "HH:mm").subtract(1, "years");
+      var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
+      var tRemainder = diffTime % frequencyRate;
+      var tMinutesTillTrain = frequencyRate - tRemainder;
+
+
+        console.log(childSnapshot.val().name);
+        console.log(childSnapshot.val().role);
+        console.log(childSnapshot.val().firstTrainTime);
+        console.log(childSnapshot.val().startDate);
+
+
+    var name = childSnapshot.val().name;
+    var role = childSnapshot.val().role;
+    var startDate = childSnapshot.val().startDate;
+
+    $("tbody").append("<tr><td>" + name + "</td><td>" + role + "</td><td>" + startDate + "</td><td>" + displayedTime +"</td><td>" + tMinutesTillTrain +"</td></tr>");
+
+
+    });
+
+  </script>
+  </body>
+</html>
